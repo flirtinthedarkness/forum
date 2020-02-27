@@ -1,6 +1,7 @@
 package com.delicate.forum.controller;
 
 import com.delicate.forum.entity.DiscussPost;
+import com.delicate.forum.entity.Page;
 import com.delicate.forum.entity.User;
 import com.delicate.forum.service.DiscussPostService;
 import com.delicate.forum.service.UserService;
@@ -25,8 +26,11 @@ public class HomeController {
     private DiscussPostService discussPostService;
 
     @RequestMapping(path = "/index", method = RequestMethod.GET)
-    public String getIndexPage(Model model) {
-        List<DiscussPost> discussPostList = discussPostService.findDiscussPosts(0, 0, 10);
+    public String getIndexPage(Model model, Page page) {
+        page.setRows(discussPostService.findDiscussPostRows(0));
+        page.setPath("/index");
+
+        List<DiscussPost> discussPostList = discussPostService.findDiscussPosts(0, page.getOffset(), page.getLimit());
         List<Map<String, Object>> discussPosts = new ArrayList<>();
         if (discussPostList != null) {
             for (DiscussPost post : discussPostList) {
