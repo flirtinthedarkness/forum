@@ -2,9 +2,11 @@ package com.delicate.forum.controller;
 
 import com.delicate.forum.entity.User;
 import com.delicate.forum.service.UserService;
+import com.delicate.forum.util.ForumConstant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -22,6 +24,11 @@ public class LoginController {
         return "/site/register";
     }
 
+    @RequestMapping(path = "/login", method = RequestMethod.GET)
+    public String getLoginPage() {
+        return "/site/login";
+    }
+
     @RequestMapping(path = "/register", method = RequestMethod.POST)
     public String register(Model model, User user) {
         Map<String, Object> returnMap = userService.register(user);
@@ -35,5 +42,23 @@ public class LoginController {
             model.addAttribute("passwordMsg", returnMap.get("passwordMsg"));
             return "/site/register";
         }
+    }
+
+    @RequestMapping(path = "/activation/{userId}/{activationCode}", method = RequestMethod.GET)
+    public String activateAccount(Model model,
+                                  @PathVariable("userId") int userId,
+                                  @PathVariable("activationCode") String activationCode) {
+        int result = userService.activateAccount(userId, activationCode);
+        if (result == ForumConstant.ACTIVATION_SUCCESS) {
+            model.addAttribute("msg", "Your account has been activated successfully!");
+            model.addAttribute("target", "/login");
+        } else if (result == ForumConstant.ACTIVATION_REPEAT) {
+            model.addAttribute("msg", "Account was activated before.");
+            model.addAttribute("target", "/index");
+        } else {
+            model.addAttribute("msg", "Activation failed, wrong activation code.");
+            model.addAttribute("target", "/index");
+        }
+        return "/site/operate-result";
     }
 }

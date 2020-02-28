@@ -2,6 +2,7 @@ package com.delicate.forum.service;
 
 import com.delicate.forum.dao.UserMapper;
 import com.delicate.forum.entity.User;
+import com.delicate.forum.util.ForumConstant;
 import com.delicate.forum.util.ForumUtils;
 import com.delicate.forum.util.MailClient;
 import org.apache.commons.lang3.StringUtils;
@@ -17,7 +18,7 @@ import java.util.Map;
 import java.util.Random;
 
 @Service
-public class UserService {
+public class UserService implements ForumConstant {
 
     @Autowired
     private UserMapper userMapper;
@@ -80,6 +81,7 @@ public class UserService {
 
         // send activation email
         Context context = new Context();
+        context.setVariable("username", user.getUsername());
         context.setVariable("email", user.getEmail());
         String url = domain + contextPath + "/account/activation/" + user.getId() + "/" + user.getActivationCode();
         context.setVariable("url", url);
@@ -87,5 +89,20 @@ public class UserService {
         mailClient.sendMail(user.getEmail(), "Account Activation", content);
 
         return returnMap;
+    }
+
+    public int activateAccount(int userId, String activationCode) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return ACTIVATION_FAILURE;
+        }
+        if (user.getStatus() == 1) {
+            return ACTIVATION_REPEAT;
+        } else if (user.getActivationCode().equals(activationCode)) {
+            userMapper.updateStatus(userId, 1);
+            return ACTIVATION_SUCCESS;
+        } else {
+            return ACTIVATION_FAILURE;
+        }
     }
 }
