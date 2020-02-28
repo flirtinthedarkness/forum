@@ -4,9 +4,11 @@ import com.delicate.forum.entity.User;
 import com.delicate.forum.service.UserService;
 import com.delicate.forum.util.ForumConstant;
 import com.google.code.kaptcha.Producer;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
@@ -32,6 +35,9 @@ public class LoginController {
 
     @Autowired
     private Producer kaptchaProducer;
+
+    @Value("${server.servlet.context-path}")
+    private String contextPath;
 
     @RequestMapping(path = "/register", method = RequestMethod.GET)
     public String getRegisterPage() {
@@ -55,6 +61,32 @@ public class LoginController {
             model.addAttribute("emailMsg", returnMap.get("emailMsg"));
             model.addAttribute("passwordMsg", returnMap.get("passwordMsg"));
             return "/site/register";
+        }
+    }
+
+    @RequestMapping(path = "/login", method = RequestMethod.POST)
+    public String login(String username, String password, String verificationCode, boolean rememberMe,
+                        Model model, HttpSession session, HttpServletResponse response) {
+        String kaptcha = (String) session.getAttribute("kaptcha");
+        if (StringUtils.isBlank(kaptcha) ||
+                StringUtils.isBlank(verificationCode) ||
+                !kaptcha.equalsIgnoreCase(verificationCode)) {
+            model.addAttribute("codeMsg", "Wrong verification code");
+            return "/site/login";
+        }
+
+        int expiredSeconds = rememberMe ? ForumConstant.REMEMBER_EXPIRED_SECONDS : ForumConstant.DEFAULT_EXPIRED_SECONDS;
+        Map<String, Object> tipsMap = userService.login(username, password, expiredSeconds);
+        if (tipsMap.containsKey("ticket")) {
+            Cookie cookie = new Cookie("ticket", tipsMap.get("ticket").toString());
+            cookie.setPath(contextPath);
+            cookie.setMaxAge(expiredSeconds);
+            response.addCookie(cookie);
+            return "redirect:/index";
+        } else {
+            model.addAttribute("usernameMsg", tipsMap.get("usernameMsg"));
+            model.addAttribute("passwordMsg", tipsMap.get("passwordMsg"));
+            return "/site/login";
         }
     }
 
@@ -86,7 +118,7 @@ public class LoginController {
 
         response.setContentType("image/png");
         try {
-            OutputStream os =  response.getOutputStream();
+            OutputStream os = response.getOutputStream();
             ImageIO.write(codeImage, "png", os);
         } catch (IOException e) {
             logger.error("Response verification code failed: " + e.getMessage());
