@@ -159,4 +159,12 @@ public class UserService implements ForumConstant {
     public LoginTicket findLoginTicket(String ticket) {
         return loginTicketMapper.selectByTicket(ticket);
     }
+
+    public int updateUserAvatar(int userId, String avatarUrl) {
+        return userMapper.updateAvatar(userId, avatarUrl);
+    }
+
+    public int updateUserPassword(int userId, String password) {
+        return userMapper.updatePassword(userId, password);
+    }
 }
