@@ -151,4 +151,8 @@ public class UserService implements ForumConstant {
 
         return returnMap;
     }
+
+    public void logout(String ticket) {
+        loginTicketMapper.updateTicketStatus(ticket, 1);
+    }
 }
