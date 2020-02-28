@@ -1,5 +1,6 @@
 package com.delicate.forum.controller;
 
+import com.delicate.forum.annotation.LoginRequired;
 import com.delicate.forum.entity.User;
 import com.delicate.forum.service.UserService;
 import com.delicate.forum.util.ForumUtils;
@@ -43,11 +44,13 @@ public class UserController {
     @Autowired
     private HostHolder hostHolder;
 
+    @LoginRequired
     @RequestMapping(path = "/settings", method = RequestMethod.GET)
     public String getUserSettingsPage() {
         return "/site/setting";
     }
 
+    @LoginRequired
     @RequestMapping(path = "/uploadAvatar", method = RequestMethod.POST)
     public String uploadAvatar(MultipartFile avatarImage, Model model) {
         if (avatarImage == null) {
@@ -96,6 +99,7 @@ public class UserController {
         }
     }
 
+    @LoginRequired
     @RequestMapping(path = "/alterPassword", method = RequestMethod.POST)
     public String alterPassword(String password, String newPassword,
                               Model model) {
