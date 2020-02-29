@@ -2,9 +2,11 @@ package com.delicate.forum;
 
 import com.delicate.forum.dao.DiscussPostMapper;
 import com.delicate.forum.dao.LoginTicketMapper;
+import com.delicate.forum.dao.MessageMapper;
 import com.delicate.forum.dao.UserMapper;
 import com.delicate.forum.entity.DiscussPost;
 import com.delicate.forum.entity.LoginTicket;
+import com.delicate.forum.entity.Message;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +27,9 @@ public class MapperTest {
 
     @Autowired
     private LoginTicketMapper loginTicketMapper;
+
+    @Autowired
+    private MessageMapper messageMapper;
 
     @Test
     public void testSelectUser() {
@@ -47,5 +52,27 @@ public class MapperTest {
         loginTicket.setStatus(0);
         loginTicket.setExpired(new Date(System.currentTimeMillis() + 1000 * 60 * 10));
         loginTicketMapper.insertLoginTicket(loginTicket);
+    }
+
+    @Test
+    public void testMessageMapper() {
+        List<Message> messages = messageMapper.selectLatestConversations(111, 0, 20);
+        for (Message message : messages) {
+            System.out.println(message);
+        }
+
+        int count = messageMapper.selectConversationCount(111);
+        System.out.println(count);
+
+        messages = messageMapper.selectMessageByConversation("111_112", 0, 10);
+        for (Message message : messages) {
+            System.out.println(message);
+        }
+
+        count = messageMapper.selectMessageCountByConversation("111_112");
+        System.out.println(count);
+
+        int totalUnreadCount = messageMapper.selectMessageUnreadCount(131, "111_131");
+        System.out.println(totalUnreadCount);
     }
 }
