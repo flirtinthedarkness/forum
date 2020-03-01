@@ -44,6 +44,10 @@ public class UserService implements ForumConstant {
         return userMapper.selectById(id);
     }
 
+    public User findUserByUsername(String username) {
+        return userMapper.selectByName(username);
+    }
+
     public Map<String, Object> register(User user) {
         Map<String, Object> returnMap = new HashMap<>();
         if (user == null) {

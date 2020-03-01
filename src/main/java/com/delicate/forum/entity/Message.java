@@ -8,6 +8,7 @@ public class Message {
     private int fromId;
     private int toId;
     private String conversationId;
+    private int status;
     private String content;
     private Date createTime;
 
@@ -18,9 +19,18 @@ public class Message {
                 ", fromId=" + fromId +
                 ", toId=" + toId +
                 ", conversationId='" + conversationId + '\'' +
+                ", status=" + status +
                 ", content='" + content + '\'' +
                 ", createTime=" + createTime +
                 '}';
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 
     public int getId() {

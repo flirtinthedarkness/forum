@@ -5,6 +5,7 @@ import com.delicate.forum.entity.Page;
 import com.delicate.forum.entity.User;
 import com.delicate.forum.service.MessageService;
 import com.delicate.forum.service.UserService;
+import com.delicate.forum.util.ForumUtils;
 import com.delicate.forum.util.HostHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -12,11 +13,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 @RequestMapping("/conversation")
@@ -85,7 +84,48 @@ public class MessageController {
 
         model.addAttribute("targetUser", getConversationTargetUser(conversationId));
 
+        // set message status to read
+        List<Integer> unreadMessageIds = getUnreadMessageIds(messageList);
+        if (!unreadMessageIds.isEmpty()) {
+            messageService.updateMessagesStatus(unreadMessageIds);
+        }
+
         return "/site/letter-detail";
+    }
+
+    @RequestMapping(path = "/message/send", method = RequestMethod.POST)
+    @ResponseBody
+    public String sendMessage(String targetUsername, String content) {
+        User targetUser = userService.findUserByUsername(targetUsername);
+        if (targetUser == null) {
+            return ForumUtils.getJSONString(1, "Message target user not exist");
+        }
+
+        Message message = new Message();
+        message.setFromId(hostHolder.getUser().getId());
+        message.setToId(targetUser.getId());
+        if (message.getFromId() < message.getToId()) {
+            message.setConversationId(message.getFromId() + "_" + message.getToId());
+        } else {
+            message.setConversationId(message.getToId() + "_" + message.getFromId());
+        }
+        message.setContent(content);
+        message.setCreateTime(new Date());
+        messageService.addMessage(message);
+
+        return ForumUtils.getJSONString(0);
+    }
+
+    private List<Integer> getUnreadMessageIds(List<Message> messageList) {
+        List<Integer> idList = new ArrayList<>();
+        if (messageList != null) {
+            for (Message message : messageList) {
+                if (message.getToId() == hostHolder.getUser().getId() && message.getStatus() == 0) {
+                    idList.add(message.getId());
+                }
+            }
+        }
+        return idList;
     }
 
     private User getConversationTargetUser(String conversationId) {
