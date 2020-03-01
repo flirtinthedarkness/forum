@@ -9,6 +9,7 @@ import com.delicate.forum.util.HostHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -62,5 +63,40 @@ public class MessageController {
         model.addAttribute("totalUnread", messageUnreadCount);
 
         return "/site/letter";
+    }
+
+    @RequestMapping(path = "/detail/{conversationId}", method = RequestMethod.GET)
+    public String getConversationDetail(@PathVariable("conversationId") String conversationId, Page page, Model model) {
+        page.setLimit(5);
+        page.setPath("/conversation/detail/" + conversationId);
+        page.setRows(messageService.findMessageCount(conversationId));
+
+        List<Message> messageList = messageService.findMessagesByConversation(conversationId, page.getOffset(), page.getLimit());
+        List<Map<String, Object>> messages = new ArrayList<>();
+        if (messageList != null) {
+            for (Message message : messageList) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("message", message);
+                map.put("fromUser", userService.findUserById(message.getFromId()));
+                messages.add(map);
+            }
+        }
+        model.addAttribute("messages", messages);
+
+        model.addAttribute("targetUser", getConversationTargetUser(conversationId));
+
+        return "/site/letter-detail";
+    }
+
+    private User getConversationTargetUser(String conversationId) {
+        String[] ids = conversationId.split("_");
+        int id1 = Integer.parseInt(ids[0]);
+        int id2 = Integer.parseInt(ids[1]);
+
+        if (hostHolder.getUser().getId() == id1) {
+            return userService.findUserById(id2);
+        } else {
+            return userService.findUserById(id1);
+        }
     }
 }
